@@ -1,65 +1,68 @@
 # 🔍 Fake News Detector
 
-A complete NLP pipeline comparing three approaches to automated fake news detection on the ISOT Fake News Dataset: traditional machine learning (TF-IDF + Logistic Regression), deep learning (CNN with pretrained Word2Vec embeddings), and a fine-tuned transformer (DistilBERT). The project includes thorough EDA, model explainability with SHAP and LIME, error analysis, and a deployable Streamlit web application.
+A complete NLP pipeline that compares three approaches to automated fake news detection on the ISOT Fake News Dataset: traditional machine learning (TF-IDF + Logistic Regression), deep learning (CNN with pretrained Word2Vec embeddings), and a fine-tuned transformer (DistilBERT). The project includes thorough EDA, model explainability with SHAP and LIME, error analysis, and a deployable Streamlit web application.
 
 ---
 
 ## 🚀 Live Demo
 
-[Streamlit App](https://your-streamlit-app-url.streamlit.app) ← *replace with deployed URL*
+[**Try the Fake News Detector →**](https://fake-news-detector-mithatkus.streamlit.app)
+
+Paste any news article into the app and get an instant prediction. The app uses 
+a TF-IDF Logistic Regression model trained on 44,889 articles from the ISOT 
+dataset to classify articles as real or fake with 98.1% accuracy. It also shows 
+a LIME explanation highlighting which specific words in your article pushed the 
+prediction toward fake or real, so the model's reasoning is very 
+interpretable.
 
 ---
 
 ## 📊 Results
 
-| Model | Accuracy | Precision | Recall | F1 | AUC-ROC |
-|---|---|---|---|---|---|
-| Logistic Regression (TF-IDF) | ~0.99 | ~0.99 | ~0.99 | ~0.99 | ~0.999 |
-| Logistic Regression (Word2Vec) | ~0.96 | ~0.96 | ~0.96 | ~0.96 | ~0.99 |
-| CNN (Word2Vec embeddings) | ~0.98 | ~0.98 | ~0.98 | ~0.98 | ~0.998 |
-| DistilBERT (fine-tuned) | ~0.995 | ~0.995 | ~0.995 | ~0.995 | ~0.9995 |
+| Model | Accuracy | Precision | Recall | F1 |
+|---|---|---|---|---|
+| Logistic Regression (TF-IDF) | 0.981 | 0.976 | 0.985 | 0.980 |
+| Logistic Regression (Word2Vec) | 0.939 | 0.929 | 0.946 | 0.937 |
+| CNN (Word2Vec embeddings) | 0.986 | 0.990 | 0.980 | 0.985 |
+| DistilBERT (fine-tuned) | 0.9999 | 1.000 | 0.9998 | 0.9999 |
 
-*Values are placeholders — fill in after running the notebooks.*
+5-fold cross-validation (Logistic Regression):
+- TF-IDF: Accuracy 0.981 ± 0.002, F1 0.980 ± 0.002
+- Word2Vec: Accuracy 0.939 ± 0.003, F1 0.936 ± 0.003
 
-**Takeaway:** TF-IDF Logistic Regression achieves surprisingly strong performance, while DistilBERT's contextual embeddings push accuracy to near-perfect — but at significantly higher compute cost.
+**Takeaway:** TF-IDF Logistic Regression achieves surprisingly strong performance 
+at 98.1% accuracy, suggesting word-level features alone are highly discriminative 
+for this dataset. The CNN improves slightly to 98.6% by capturing local text 
+patterns via convolution. DistilBERT's contextual embeddings push accuracy to 
+near-perfect (99.99%), but at significantly higher compute cost. As a result, TF-IDF 
+Logistic Regression is the best choice when speed and simplicity matter, and that's
+why it's the only available model on the streamlit app.
+
 
 ---
 
 ## 🔑 Key Findings
 
-- **[Finding from EDA notebook]** — e.g., fake news articles tend to be significantly longer than real news on average, suggesting padding or filler content.
-- **[Finding from EDA notebook]** — e.g., certain subjects (e.g., "politicsNews") are overwhelmingly real while others ("News", "politics") skew heavily fake.
-- **[Finding from error analysis]** — e.g., misclassified articles are disproportionately short, suggesting the model struggles with limited context.
-- **[Finding from SHAP]** — e.g., the word "reuters" is the single strongest signal for real news, reflecting the dataset's sourcing from Reuters.
+- **Class balance:** The dataset is nearly balanced with 23,481 fake and 21,417 
+  real articles (44,898 total), which makes accuracy a reliable metric.
+- **Fake news articles are longer on average:** Fake articles average 438 words 
+  vs 396 for real articles, with higher variance which suggest more padding or 
+  filler content in fake news.
+- **Misclassified articles tend to be longer and more ambiguous:** Mean length 
+  of misclassified articles (272 words) exceeds correctly classified ones (233 
+  words). Both the LR and CNN models consistently struggle with the same edge 
+  cases, namely articles about Central American politics, transgender policy, and 
+  Russia-related topics that appear in both fake and real news.
+- **CNN reduces errors by 25% over TF-IDF LR:** The CNN misclassifies 126 
+  articles vs 169 for TF-IDF LR (1.40% vs 1.88% error rate), which shows that 
+  local sequence patterns that are captured by convolution add meaningful signal 
+  beyond bag-of-words features.
 
 ---
 
 ## 📁 Project Structure
 
-```
-fake-news-detector/
-├── data/
-│   ├── raw/                          # Original ISOT dataset CSVs (not tracked in git)
-│   │   ├── True.csv                  # Real news articles
-│   │   └── Fake.csv                  # Fake news articles
-│   └── processed/
-│       └── cleaned_isot.csv          # Preprocessed and labeled dataset
-├── models/                           # Trained model artifacts
-│   ├── tfidf_vectorizer.pkl          # Fitted TF-IDF vectorizer
-│   ├── logistic_regression_tfidf.pkl # LR trained on TF-IDF features
-│   ├── logistic_regression_w2v.pkl   # LR trained on Word2Vec embeddings
-│   ├── cnn_model.keras               # Trained Keras CNN model
-│   └── distilbert_model/             # Saved HuggingFace DistilBERT model
-├── notebooks/
-│   ├── 01_eda_and_preprocessing.ipynb   # EDA, visualizations, preprocessing pipeline
-│   ├── 02_logistic_regression.ipynb     # TF-IDF and Word2Vec LR models + SHAP
-│   ├── 03_cnn_modeling.ipynb            # CNN model + LIME explainability
-│   └── 04_bert_modeling.ipynb           # DistilBERT fine-tuning
-├── app/
-│   └── app.py                        # Streamlit web application
-├── requirements.txt                  # Python dependencies
-└── README.md                         # This file
-```
+The repository is organized into four main areas. The `data/` folder contains both the raw ISOT dataset CSVs and the preprocessed output — note that the raw CSVs are not tracked in git and must be downloaded separately. The `models/` folder holds all trained model artifacts: the TF-IDF vectorizer and its logistic regression model (used by the Streamlit app), the Word2Vec logistic regression, the CNN, and the fine-tuned DistilBERT. The `notebooks/` folder contains four notebooks that must be run in order — EDA and preprocessing, logistic regression with SHAP explainability, CNN modeling with LIME explainability, and DistilBERT fine-tuning. Finally, the `app/` folder contains the Streamlit web application that loads the TF-IDF model and serves predictions through a browser interface.
 
 ---
 
@@ -126,11 +129,11 @@ Raw news articles (title + text combined) are cleaned through a multi-step pipel
 | TF-IDF + Logistic Regression | Sparse word/bigram frequency matrix | Fast, interpretable, strong baseline; ignores word order |
 | Word2Vec + Logistic Regression | Dense 300-dim average embedding | Captures semantic similarity; loses local word patterns |
 | CNN + Word2Vec | Pretrained embedding + convolutional filters | Learns local n-gram patterns via learned filters |
-| DistilBERT (fine-tuned) | Contextual token embeddings | Every word's meaning depends on its context; captures nuance |
+| DistilBERT (fine-tuned) | Contextual token embeddings | Every word's meaning depends on its context, captures nuance |
 
 ### Explainability
-- **SHAP (Logistic Regression):** `shap.LinearExplainer` computes each word's contribution to the prediction. The summary plot reveals globally which terms drive fake vs. real classification; waterfall plots show individual article decisions.
-- **LIME (CNN):** `LimeTextExplainer` perturbs the input text by masking words, then fits a local linear model to approximate the CNN's decision boundary — revealing which words pushed the prediction in each direction.
+- **SHAP (Logistic Regression):** `shap.LinearExplainer` computes each word's contribution to the prediction. The summary plot reveals globally which terms drive fake vs. real classification and the waterfall plots show individual article decisions.
+- **LIME (CNN):** The explainer tests what happens when individual words are removed from the article, then uses those results to identify which words had the biggest impact on the prediction — highlighting them in green (pushed toward real) or red (pushed toward fake).
 
 ---
 

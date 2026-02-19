@@ -1,0 +1,20 @@
+# Full dependencies for running all four notebooks locally.
+# Do NOT use this file for Streamlit Cloud — use requirements.txt instead.
+
+pandas==2.0.3
+numpy==1.24.3
+matplotlib
+seaborn
+nltk==3.8.1
+scikit-learn==1.3.1
+joblib==1.3.2
+gensim==4.3.2
+tensorflow==2.13.0
+torch==2.2.2
+transformers==4.35.2
+lime==0.2.0.1
+shap
+wordcloud
+tqdm
+ipywidgets
+streamlit==1.40.1

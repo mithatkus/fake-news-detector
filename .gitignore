@@ -5,8 +5,10 @@ data/raw/Fake.csv
 # Processed data
 data/processed/
 
-# Trained models
-models/
+# Trained models (large / regenerable — exclude from git)
+models/cnn_model.keras
+models/distilbert_model/
+models/logistic_regression_w2v.pkl
 
 # Python
 __pycache__/
@@ -35,4 +37,3 @@ env/
 
 # Gensim cache
 ~/gensim-data/
-models/

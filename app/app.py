@@ -1,19 +1,23 @@
-import streamlit as st
-import joblib
-import numpy as np
+import os
 import re
 import string
+
+import joblib
 import nltk
+import numpy as np
+import streamlit as st
 from nltk.corpus import stopwords
 from nltk.stem import PorterStemmer
 from nltk.tokenize import word_tokenize
 
 # ── NLTK downloads ────────────────────────────────────────────────────────────
-for resource in ["punkt", "punkt_tab", "stopwords"]:
-    try:
-        nltk.data.find(f"tokenizers/{resource}" if "punkt" in resource else f"corpora/{resource}")
-    except LookupError:
-        nltk.download(resource, quiet=True)
+nltk.download('punkt', quiet=True)
+nltk.download('punkt_tab', quiet=True)
+nltk.download('stopwords', quiet=True)
+
+# ── Paths ─────────────────────────────────────────────────────────────────────
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+MODELS_DIR = os.path.join(BASE_DIR, 'models')
 
 # ── Page config ───────────────────────────────────────────────────────────────
 st.set_page_config(
@@ -50,47 +54,22 @@ def preprocess(text: str) -> str:
 
 # ── Model loading (cached) ────────────────────────────────────────────────────
 @st.cache_resource
-def load_tfidf_model():
-    vectorizer = joblib.load("models/tfidf_vectorizer.pkl")
-    model = joblib.load("models/logistic_regression_tfidf.pkl")
-    return vectorizer, model
-
-
-@st.cache_resource
-def load_w2v_model():
-    model = joblib.load("models/logistic_regression_w2v.pkl")
-    return model
-
-
-@st.cache_resource
-def load_w2v_embeddings():
-    import gensim.downloader as api
-    return api.load("word2vec-google-news-300")
-
-
-def article_to_avg_vector(text: str, wv, dim: int = 300) -> np.ndarray:
-    tokens = text.split()
-    vectors = [wv[t] for t in tokens if t in wv]
-    if not vectors:
-        return np.zeros(dim)
-    return np.mean(vectors, axis=0)
+def load_model():
+    vectorizer = joblib.load(os.path.join(MODELS_DIR, "tfidf_vectorizer.pkl"))
+    clf = joblib.load(os.path.join(MODELS_DIR, "logistic_regression_tfidf.pkl"))
+    return vectorizer, clf
 
 
 # ── LIME helper ────────────────────────────────────────────────────────────────
-def lime_highlight(text: str, model, vectorizer=None, wv=None, model_type: str = "tfidf"):
+def lime_highlight(text: str, clf, vectorizer):
     try:
         from lime.lime_text import LimeTextExplainer
 
         explainer = LimeTextExplainer(class_names=["Fake", "Real"])
 
-        if model_type == "tfidf":
-            def predict_fn(texts):
-                X = vectorizer.transform(texts)
-                return model.predict_proba(X)
-        else:
-            def predict_fn(texts):
-                vectors = np.array([article_to_avg_vector(t, wv) for t in texts])
-                return model.predict_proba(vectors)
+        def predict_fn(texts):
+            X = vectorizer.transform(texts)
+            return clf.predict_proba(X)
 
         clean = preprocess(text)
         exp = explainer.explain_instance(clean, predict_fn, num_features=15, num_samples=500)
@@ -130,7 +109,7 @@ with st.sidebar:
 
 # ── Main ───────────────────────────────────────────────────────────────────────
 st.title("🔍 Fake News Detector")
-st.caption("Paste any news article to classify it as real or fake using NLP models trained on the ISOT dataset.")
+st.caption("Paste any news article to classify it as real or fake using a Logistic Regression model trained on the ISOT dataset.")
 
 # Example articles
 EXAMPLES = {
@@ -161,11 +140,6 @@ article = st.text_area(
     placeholder="Paste the full text of a news article here...",
 )
 
-model_choice = st.selectbox(
-    "Choose a model",
-    ["Logistic Regression (TF-IDF)", "Logistic Regression (Word2Vec)"],
-)
-
 analyze = st.button("🔍 Analyze Article", type="primary", use_container_width=True)
 
 if analyze:
@@ -173,34 +147,20 @@ if analyze:
         st.warning("Please paste an article before clicking Analyze.")
     else:
         with st.spinner("Analyzing..."):
+            try:
+                vectorizer, clf = load_model()
+            except FileNotFoundError:
+                st.error(
+                    "Model files not found. Run `notebooks/02_logistic_regression.ipynb` first "
+                    "to train and save the models to `models/`."
+                )
+                st.stop()
+
             clean = preprocess(article)
+            X = vectorizer.transform([clean])
+            proba = clf.predict_proba(X)[0]
+            lime_words = lime_highlight(article, clf, vectorizer)
 
-            if model_choice == "Logistic Regression (TF-IDF)":
-                try:
-                    vectorizer, clf = load_tfidf_model()
-                    X = vectorizer.transform([clean])
-                    proba = clf.predict_proba(X)[0]
-                    lime_words = lime_highlight(article, clf, vectorizer=vectorizer, model_type="tfidf")
-                except FileNotFoundError:
-                    st.error(
-                        "Model files not found. Run `notebooks/02_logistic_regression.ipynb` first "
-                        "to train and save the models to `models/`."
-                    )
-                    st.stop()
-            else:
-                try:
-                    clf = load_w2v_model()
-                    wv = load_w2v_embeddings()
-                    vec = article_to_avg_vector(clean, wv).reshape(1, -1)
-                    proba = clf.predict_proba(vec)[0]
-                    lime_words = lime_highlight(article, clf, wv=wv, model_type="w2v")
-                except FileNotFoundError:
-                    st.error(
-                        "Model files not found. Run `notebooks/02_logistic_regression.ipynb` first."
-                    )
-                    st.stop()
-
-        # Result
         fake_prob = proba[0]
         real_prob = proba[1]
         is_real = real_prob >= 0.5
@@ -210,12 +170,12 @@ if analyze:
 
         if is_real:
             st.markdown(
-                f"<h2 style='color:#2ecc71; text-align:center;'>✅ REAL NEWS</h2>",
+                "<h2 style='color:#2ecc71; text-align:center;'>✅ REAL NEWS</h2>",
                 unsafe_allow_html=True,
             )
         else:
             st.markdown(
-                f"<h2 style='color:#e74c3c; text-align:center;'>🚨 FAKE NEWS</h2>",
+                "<h2 style='color:#e74c3c; text-align:center;'>🚨 FAKE NEWS</h2>",
                 unsafe_allow_html=True,
             )
 
