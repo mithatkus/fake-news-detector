@@ -35,3 +35,4 @@ env/
 
 # Gensim cache
 ~/gensim-data/
+models/
