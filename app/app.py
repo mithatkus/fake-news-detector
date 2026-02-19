@@ -10,11 +10,6 @@ from nltk.corpus import stopwords
 from nltk.stem import PorterStemmer
 from nltk.tokenize import word_tokenize
 
-# ── NLTK downloads ────────────────────────────────────────────────────────────
-nltk.download('punkt', quiet=True)
-nltk.download('punkt_tab', quiet=True)
-nltk.download('stopwords', quiet=True)
-
 # ── Paths ─────────────────────────────────────────────────────────────────────
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 MODELS_DIR = os.path.join(BASE_DIR, 'models')
@@ -26,8 +21,22 @@ st.set_page_config(
     layout="wide",
 )
 
+# ── NLTK downloads ────────────────────────────────────────────────────────────
+try:
+    nltk.download('punkt', quiet=True)
+    nltk.download('punkt_tab', quiet=True)
+    nltk.download('stopwords', quiet=True)
+except Exception as e:
+    st.error(f"Failed to download NLTK data: {e}")
+    st.stop()
+
 # ── Preprocessing ─────────────────────────────────────────────────────────────
-STOP_WORDS = set(stopwords.words("english"))
+try:
+    STOP_WORDS = set(stopwords.words("english"))
+except Exception as e:
+    st.error(f"Failed to load NLTK stopwords: {e}")
+    st.stop()
+
 stemmer = PorterStemmer()
 
 
@@ -149,11 +158,8 @@ if analyze:
         with st.spinner("Analyzing..."):
             try:
                 vectorizer, clf = load_model()
-            except FileNotFoundError:
-                st.error(
-                    "Model files not found. Run `notebooks/02_logistic_regression.ipynb` first "
-                    "to train and save the models to `models/`."
-                )
+            except Exception as e:
+                st.error(f"Failed to load models: {e}")
                 st.stop()
 
             clean = preprocess(article)
