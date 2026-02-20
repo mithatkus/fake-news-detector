@@ -1,10 +1,10 @@
-# 🔍 Fake News Detector
+# Fake News Detector
 
 A complete NLP pipeline that compares three approaches to automated fake news detection on the ISOT Fake News Dataset: traditional machine learning (TF-IDF + Logistic Regression), deep learning (CNN with pretrained Word2Vec embeddings), and a fine-tuned transformer (DistilBERT). The project includes thorough EDA, model explainability with SHAP and LIME, error analysis, and a deployable Streamlit web application.
 
 ---
 
-## 🚀 Live Demo
+## Live Demo
 
 [**Try the Fake News Detector →**](https://fake-news-detector-mithatkus.streamlit.app)
 
@@ -17,7 +17,7 @@ interpretable.
 
 ---
 
-## 📊 Results
+## Results
 
 | Model | Accuracy | Precision | Recall | F1 |
 |---|---|---|---|---|
@@ -41,7 +41,7 @@ why it's the only available model on the streamlit app.
 
 ---
 
-## 🔑 Key Findings
+## Key Findings
 
 - **Class balance:** The dataset is nearly balanced with 23,481 fake and 21,417 
   real articles (44,898 total), which makes accuracy a reliable metric.
@@ -60,13 +60,13 @@ why it's the only available model on the streamlit app.
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 The repository is organized into four main areas. The `data/` folder contains both the raw ISOT dataset CSVs and the preprocessed output — note that the raw CSVs are not tracked in git and must be downloaded separately. The `models/` folder holds all trained model artifacts: the TF-IDF vectorizer and its logistic regression model (used by the Streamlit app), the Word2Vec logistic regression, the CNN, and the fine-tuned DistilBERT. The `notebooks/` folder contains four notebooks that must be run in order — EDA and preprocessing, logistic regression with SHAP explainability, CNN modeling with LIME explainability, and DistilBERT fine-tuning. Finally, the `app/` folder contains the Streamlit web application that loads the TF-IDF model and serves predictions through a browser interface.
 
 ---
 
-## 🗃️ Dataset
+## Dataset
 
 **ISOT Fake News Dataset** — collected by the Information Security and Object Technology (ISOT) Research Lab at the University of Victoria.
 
@@ -80,7 +80,7 @@ Download: [Kaggle — ISOT Fake News Detection Dataset](https://www.kaggle.com/d
 
 ---
 
-## ⚙️ Setup
+## Setup
 
 **1. Clone the repository**
 ```bash
@@ -117,7 +117,7 @@ streamlit run app/app.py
 
 ---
 
-## 🧠 How It Works
+## How It Works
 
 ### Preprocessing Pipeline
 Raw news articles (title + text combined) are cleaned through a multi-step pipeline: Reuters source tags are stripped, URLs/mentions/hashtags removed, text lowercased, numbers and punctuation removed, tokenized with NLTK, stopwords filtered, and tokens stemmed with PorterStemmer. The result is a compact `clean_text` column used by the traditional ML and CNN models. DistilBERT uses the original (unstemmed) text since it benefits from natural language structure.
@@ -137,7 +137,7 @@ Raw news articles (title + text combined) are cleaned through a multi-step pipel
 
 ---
 
-## 📚 References
+## References
 
 - Ahmed, H., Traore, I., & Saad, S. (2017). *Detection of Online Fake News Using N-Gram Analysis and Machine Learning Techniques.* ISDDC. — **ISOT dataset**
 - Mikolov, T., et al. (2013). *Distributed Representations of Words and Phrases and their Compositionality.* NeurIPS. — **Word2Vec**
