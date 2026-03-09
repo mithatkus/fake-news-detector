@@ -106,7 +106,7 @@ with st.sidebar:
     )
 
     st.header("🔗 Links")
-    st.markdown("[GitHub Repository](https://github.com/your-username/fake-news-detector)")
+    st.markdown("[GitHub Repository](https://github.com/mithatkus/fake-news-detector)")
 
     st.header("🗃️ Dataset")
     st.markdown(
